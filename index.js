@@ -5,10 +5,11 @@
     this.$$watchers = [];
   };
 
-  Scope.prototype.$watch = function(watchFn, listenerFn) {
+  Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
     this.$$watchers.push({
       watchFn: watchFn,
       listenerFn: listenerFn || function() {},
+      valueEq: (valueEq) ? true : false,
       last: undefined
     });
   };
@@ -17,9 +18,9 @@
     var scope = this;
     _.forEach(this.$$watchers, function(watcher) {
       var current = watcher.watchFn(scope);
-      if (current !== watcher.last) {
+      if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
         watcher.listenerFn(scope);
-        watcher.last = current;
+        watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
       }
     });
   };
