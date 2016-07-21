@@ -25,5 +25,11 @@
     });
   };
 
+  Scope.prototype.$apply = function(expr, args) {
+    var result = expr(this, args);
+    this.$digest();
+    return result;
+  };
+
   window.Scope = Scope;
 })();
