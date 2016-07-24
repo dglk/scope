@@ -15,14 +15,24 @@
   };
 
   Scope.prototype.$digest = function() {
-    var scope = this;
-    _.forEach(this.$$watchers, function(watcher) {
-      var current = watcher.watchFn(scope);
-      if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
-        watcher.listenerFn(scope);
-        watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
-      }
-    });
+    var scope = this,
+        ttl = 10,
+        dirty = false;
+    do {
+      ttl -= 1;
+      dirty = false;
+      _.forEach(this.$$watchers, function(watcher) {
+        var current = watcher.watchFn(scope);
+        if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
+          dirty = true;
+          watcher.listenerFn(scope);
+          watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
+        }
+      });
+    } while (dirty && (ttl >= 0));
+    if (ttl < 0) {
+      throw new Error("ttl limit exceeded");
+    }
   };
 
   Scope.prototype.$apply = function(expr, args) {
