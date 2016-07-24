@@ -3,6 +3,7 @@
 
   var Scope = function() {
     this.$$watchers = [];
+    this.$$asyncQueue = [];
   };
 
   Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
@@ -21,6 +22,11 @@
     do {
       ttl -= 1;
       dirty = false;
+
+      while (this.$$asyncQueue.length > 0) {
+        this.$apply(this.$$asyncQueue.shift());
+      };
+
       _.forEach(this.$$watchers, function(watcher) {
         var current = watcher.watchFn(scope);
         if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
@@ -29,9 +35,10 @@
           watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
         }
       });
-    } while (dirty && (ttl >= 0));
+    } while (dirty || this.$$asyncQueue.length > 0 && ttl >= 0);
+
     if (ttl < 0) {
-      throw new Error("ttl limit exceeded");
+      throw new Error("10 digest iterations reached");
     }
   };
 
@@ -39,6 +46,10 @@
     var result = expr(this, args);
     this.$digest();
     return result;
+  };
+
+  Scope.prototype.$evalAsync = function(expr) {
+    this.$$asyncQueue.push(expr);
   };
 
   window.Scope = Scope;
