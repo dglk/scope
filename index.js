@@ -4,6 +4,7 @@
   var Scope = function() {
     this.$$watchers = [];
     this.$$asyncQueue = [];
+    this.$$postDigestQueue = [];
     this.$$phase = null;
   };
 
@@ -43,6 +44,10 @@
 
     this.$$resetPhase();
 
+    while (this.$$postDigestQueue.length > 0) {
+      this.$$postDigestQueue.shift()();
+    };
+
     if (ttl < 0) {
       throw new Error("10 digest iterations reached");
     }
@@ -79,6 +84,10 @@
 
   Scope.prototype.$$resetPhase = function() {
     this.$$phase = null;
+  };
+
+  Scope.prototype.$$postDigest = function(expr) {
+    this.$$postDigestQueue.push(expr);
   };
 
   window.Scope = Scope;
