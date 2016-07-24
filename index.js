@@ -9,12 +9,20 @@
   };
 
   Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
-    this.$$watchers.push({
+    var watcher = {
       watchFn: watchFn,
       listenerFn: listenerFn || function() {},
       valueEq: (valueEq) ? true : false,
       last: undefined
-    });
+    };
+    this.$$watchers.push(watcher);
+
+    return function() {
+      var index = this.$$watchers.indexOf(watcher);
+      if (index >= 0) {
+        this.$$watchers.splice(index, 1);
+      }
+    };
   };
 
   Scope.prototype.$digest = function() {
@@ -104,7 +112,7 @@
 
   Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
     var scope = this;
-    this.$watch(function() {
+    return this.$watch(function() {
       return _.map(watchFns, function(watchFn) {
         return watchFn(scope);
       });
