@@ -90,5 +90,14 @@
     this.$$postDigestQueue.push(expr);
   };
 
+  Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
+    var scope = this;
+    this.$watch(function() {
+      return _.map(watchFns, function(watchFn) {
+        return watchFn(scope);
+      });
+    }, listenerFn, true);
+  };
+
   window.Scope = Scope;
 })();
