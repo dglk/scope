@@ -29,15 +29,23 @@
       dirty = false;
 
       while (this.$$asyncQueue.length > 0) {
-        this.$apply(this.$$asyncQueue.shift());
+        try {
+          this.$apply(this.$$asyncQueue.shift());
+        } catch (e) {
+          (console.error || console.log)(e);
+        }
       };
 
       _.forEach(this.$$watchers, function(watcher) {
-        var current = watcher.watchFn(scope);
-        if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
-          dirty = true;
-          watcher.listenerFn(scope);
-          watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
+        try {
+          var current = watcher.watchFn(scope);
+          if (!(watcher.valueEq ? _.isEqual : _.eq)(current, watcher.last)) {
+            dirty = true;
+            watcher.listenerFn(scope);
+            watcher.last = (watcher.valueEq) ? _.cloneDeep(current) : current;
+          }
+        } catch (e) {
+          (console.error || console.log)(e);
         }
       });
     } while (dirty || this.$$asyncQueue.length > 0 && ttl >= 0);
@@ -45,7 +53,11 @@
     this.$$resetPhase();
 
     while (this.$$postDigestQueue.length > 0) {
-      this.$$postDigestQueue.shift()();
+      try {
+        this.$$postDigestQueue.shift()();
+      } catch (e) {
+        (console.error || console.log)(e);
+      }
     };
 
     if (ttl < 0) {
